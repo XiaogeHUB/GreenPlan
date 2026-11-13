@@ -39,7 +39,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('还没有称号'), findsOneWidget);
-    expect(find.text('15 分钟 自律'), findsOneWidget);
+    expect(find.text('1 秒 自律'), findsOneWidget);
     expect(find.text('30 分钟 自律'), findsOneWidget);
     expect(find.text('1 小时 自律'), findsOneWidget);
     expect(find.text('2 小时 自律'), findsOneWidget);

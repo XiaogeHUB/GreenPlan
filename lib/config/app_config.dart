@@ -25,7 +25,7 @@ class AppConfig {
   /// 时长映射，按分钟升序。
   final List<DurationReward> durationRewards;
 
-  /// 分钟 → 奖励 ID。
+  /// 总秒数 → 奖励 ID。
   final Map<int, String> durationToRewardId;
 
   /// 称号规则。
@@ -40,8 +40,11 @@ class AppConfig {
   RewardDefinition? rewardById(String id) => rewardsById[id];
 
   /// 某个时长对应的可领取奖励；未配置的时长返回 null。
-  RewardDefinition? rewardForMinutes(int minutes) {
-    final id = durationToRewardId[minutes];
+  RewardDefinition? rewardForMinutes(int minutes) =>
+      rewardForSeconds(minutes * 60);
+
+  RewardDefinition? rewardForSeconds(int seconds) {
+    final id = durationToRewardId[seconds];
     return id == null ? null : rewardsById[id];
   }
 
@@ -69,7 +72,7 @@ class AppConfig {
     );
     final sortedDurations = List<DurationReward>.unmodifiable(
       <DurationReward>[...durationRewards]
-        ..sort((a, b) => a.minutes.compareTo(b.minutes)),
+        ..sort((a, b) => a.totalSeconds.compareTo(b.totalSeconds)),
     );
 
     return AppConfig._(
@@ -82,7 +85,7 @@ class AppConfig {
       durationRewards: sortedDurations,
       durationToRewardId: Map<int, String>.unmodifiable(<int, String>{
         for (final duration in sortedDurations)
-          duration.minutes: duration.rewardId,
+          duration.totalSeconds: duration.rewardId,
       }),
       titleRule: titleRule,
     );
@@ -200,23 +203,23 @@ class AppConfig {
     final byId = <String, RewardDefinition>{
       for (final reward in rewards) reward.id: reward,
     };
-    final minutes = <int>{};
+    final seen = <int>{};
 
     for (final duration in durationRewards) {
-      if (!minutes.add(duration.minutes)) {
-        issues.add('时长重复: ${duration.minutes} 分钟');
+      if (!seen.add(duration.totalSeconds)) {
+        issues.add('时长重复: ${duration.label}');
       }
       final reward = byId[duration.rewardId];
       if (reward == null) {
         issues.add(
-          '时长 ${duration.minutes} 分钟映射到不存在的奖励: ${duration.rewardId}',
+          '时长 ${duration.label} 映射到不存在的奖励: ${duration.rewardId}',
         );
         continue;
       }
       // 规格 1.1 / 4.4：任务奖励只发放普通奖励，芹菜及以上只能靠合成。
       if (!reward.isOrdinary) {
         issues.add(
-          '时长 ${duration.minutes} 分钟映射到非普通奖励 ${reward.id}，'
+          '时长 ${duration.label} 映射到非普通奖励 ${reward.id}，'
           '任务奖励只能是普通奖励',
         );
       }

@@ -40,7 +40,12 @@ class TaskService {
   /// 开始一个自律任务。
   ///
   /// 拒绝条件：已有进行中的任务 / 时长未配置 / 仓库已满（规格 4.2）。
-  Future<TaskSession> startTask({required int durationMinutes}) {
+  ///
+  /// [duration] 允许是秒级（调试档位）；数据库的 `duration_minutes` 列按分钟向上取整记录。
+  Future<TaskSession> startTask({required Duration duration}) {
+    if (duration <= Duration.zero) {
+      throw const TaskException('任务时长必须大于 0');
+    }
     final now = _clock();
     return db.transaction((txn) async {
       final taskDao = TaskSessionDao(txn);
@@ -50,9 +55,9 @@ class TaskService {
         throw const TaskException('已有进行中的任务');
       }
 
-      final reward = config.rewardForMinutes(durationMinutes);
+      final reward = config.rewardForSeconds(duration.inSeconds);
       if (reward == null) {
-        throw TaskException('未配置的时长: $durationMinutes 分钟');
+        throw TaskException('未配置的时长: ${duration.inSeconds} 秒');
       }
 
       final hasFreeSlot = await RewardItemDao(txn).hasFreeSlot();
@@ -62,10 +67,10 @@ class TaskService {
 
       final session = TaskSession(
         id: const Uuid().v4(),
-        durationMinutes: durationMinutes,
+        durationMinutes: (duration.inSeconds + 59) ~/ 60,
         rewardDefinitionId: reward.id,
         startedAt: now,
-        expectedEndAt: now.add(Duration(minutes: durationMinutes)),
+        expectedEndAt: now.add(duration),
         status: TaskStatus.running,
         createdAt: now,
       );

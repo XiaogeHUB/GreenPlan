@@ -27,7 +27,7 @@ void main() {
 
   group('开始任务', () {
     test('写入 running 会话，奖励按配置映射', () async {
-      final session = await service.startTask(durationMinutes: 60);
+      final session = await service.startTask(duration: Duration(minutes: 60));
 
       expect(session.status, TaskStatus.running);
       expect(session.rewardDefinitionId, 'shanghaiqing');
@@ -37,10 +37,10 @@ void main() {
     });
 
     test('已有进行中任务时拒绝再开', () async {
-      await service.startTask(durationMinutes: 15);
+      await service.startTask(duration: Duration(seconds: 1));
 
       await expectLater(
-        service.startTask(durationMinutes: 30),
+        service.startTask(duration: Duration(minutes: 30)),
         throwsA(isA<TaskException>()),
       );
     });
@@ -49,7 +49,7 @@ void main() {
       await fillWarehouse(db, config, clock);
 
       await expectLater(
-        service.startTask(durationMinutes: 15),
+        service.startTask(duration: Duration(seconds: 1)),
         throwsA(isA<TaskException>()),
       );
       expect(await service.findRunning(), isNull);
@@ -57,7 +57,7 @@ void main() {
 
     test('未配置的时长被拒绝', () async {
       await expectLater(
-        service.startTask(durationMinutes: 45),
+        service.startTask(duration: Duration(minutes: 45)),
         throwsA(isA<TaskException>()),
       );
     });
@@ -65,8 +65,8 @@ void main() {
 
   group('完成任务', () {
     test('到点完成任务，发葱并设置 72 小时过期', () async {
-      final session = await service.startTask(durationMinutes: 15);
-      clock.advance(const Duration(minutes: 15));
+      final session = await service.startTask(duration: Duration(seconds: 1));
+      clock.advance(const Duration(seconds: 1));
 
       final done = await service.completeTask(session.id);
 
@@ -86,8 +86,8 @@ void main() {
     });
 
     test('没到点不能完成', () async {
-      final session = await service.startTask(durationMinutes: 15);
-      clock.advance(const Duration(minutes: 14));
+      final session = await service.startTask(duration: Duration(seconds: 1));
+      clock.advance(const Duration(milliseconds: 999));
 
       await expectLater(
         service.completeTask(session.id),
@@ -97,9 +97,9 @@ void main() {
     });
 
     test('完成时仓库满：不丢奖励，转为待领取并在清理后可领取', () async {
-      final session = await service.startTask(durationMinutes: 15);
+      final session = await service.startTask(duration: Duration(seconds: 1));
       await fillWarehouse(db, config, clock);
-      clock.advance(const Duration(minutes: 15));
+      clock.advance(const Duration(seconds: 1));
 
       final pending = await service.completeTask(session.id);
 
@@ -123,9 +123,9 @@ void main() {
     });
 
     test('待领取状态下仓库仍满时领取失败', () async {
-      final session = await service.startTask(durationMinutes: 15);
+      final session = await service.startTask(duration: Duration(seconds: 1));
       await fillWarehouse(db, config, clock);
-      clock.advance(const Duration(minutes: 15));
+      clock.advance(const Duration(seconds: 1));
       await service.completeTask(session.id);
 
       await expectLater(
@@ -137,7 +137,7 @@ void main() {
 
   group('失败与放弃', () {
     test('失败不发奖励，且可立即重开', () async {
-      final session = await service.startTask(durationMinutes: 60);
+      final session = await service.startTask(duration: Duration(minutes: 60));
 
       final failed = await service.failTask(
         session.id,
@@ -149,12 +149,12 @@ void main() {
       expect(await RewardItemDao(db.db).getAll(), isEmpty);
       expect(await service.findRunning(), isNull);
 
-      final retry = await service.startTask(durationMinutes: 15);
+      final retry = await service.startTask(duration: Duration(seconds: 1));
       expect(retry.status, TaskStatus.running);
     });
 
     test('放弃任务无奖励', () async {
-      final session = await service.startTask(durationMinutes: 15);
+      final session = await service.startTask(duration: Duration(seconds: 1));
 
       final abandoned = await service.abandonTask(session.id);
 
@@ -163,8 +163,8 @@ void main() {
     });
 
     test('已完成的任务不能再判失败', () async {
-      final session = await service.startTask(durationMinutes: 15);
-      clock.advance(const Duration(minutes: 15));
+      final session = await service.startTask(duration: Duration(seconds: 1));
+      clock.advance(const Duration(seconds: 1));
       await service.completeTask(session.id);
 
       await expectLater(
@@ -176,7 +176,7 @@ void main() {
 
   group('冷启动恢复', () {
     test('running 任务全部判为进程被杀', () async {
-      final session = await service.startTask(durationMinutes: 240);
+      final session = await service.startTask(duration: Duration(minutes: 240));
       clock.advance(const Duration(minutes: 5));
 
       final affected = await service.recoverRunningAfterColdStart();

@@ -66,7 +66,7 @@ class HomePage extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('开始 ${duration.minutes} 分钟自律'),
+        title: Text('开始 ${duration.label} 自律'),
         content: Text(
           '成功可获得「${reward.name}」。\n'
           '期间离开应用会判定失败，来电与息屏不会。',
@@ -90,7 +90,7 @@ class HomePage extends ConsumerWidget {
     try {
       final session = await ref
           .read(taskServiceProvider)
-          .startTask(durationMinutes: duration.minutes);
+          .startTask(duration: duration.duration);
       if (!context.mounted) {
         return;
       }
@@ -197,21 +197,12 @@ class _DurationCard extends StatelessWidget {
         onTap: onTap,
         leading: RewardGlyph(reward, size: 42),
         title: Text(
-          '${_formatMinutes(duration.minutes)} 自律',
+          '${duration.label} 自律',
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: Text('成功获得 ${reward.name}'),
         trailing: const Icon(Icons.chevron_right),
       ),
     );
-  }
-
-  static String _formatMinutes(int minutes) {
-    if (minutes < 60) {
-      return '$minutes 分钟';
-    }
-    final hours = minutes ~/ 60;
-    final rest = minutes % 60;
-    return rest == 0 ? '$hours 小时' : '$hours 小时 $rest 分';
   }
 }

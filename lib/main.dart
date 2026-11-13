@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
 import 'config/config_exception.dart';
 import 'config/config_loader.dart';
+import 'core/native/native_monitor.dart';
 import 'core/providers.dart';
 import 'data/db/app_database.dart';
 import 'domain/services/task_service.dart';
@@ -29,6 +30,15 @@ Future<void> main() async {
         child: const GreenPlanApp(),
       ),
     );
+
+    // 首帧之后再申请电话权限：放在任务页里申请会在任务刚开始时弹出系统对话框，
+    // 导致误触发「失去焦点」中断判定。
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      const monitor = NativeMonitor();
+      if (!await monitor.isPhonePermissionGranted()) {
+        await monitor.requestPhonePermission();
+      }
+    });
   } on ConfigException catch (error) {
     runApp(
       BootstrapErrorApp(

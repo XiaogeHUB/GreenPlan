@@ -111,7 +111,7 @@ void main() {
       final config = _buildFromDisk();
 
       expect(config.durationRewards, hasLength(5));
-      expect(config.rewardForMinutes(15)?.id, 'cong');
+      expect(config.rewardForSeconds(1)?.id, 'cong');
       expect(config.rewardForMinutes(30)?.id, 'xiangcai');
       expect(config.rewardForMinutes(60)?.id, 'shanghaiqing');
       expect(config.rewardForMinutes(120)?.id, 'xiaobaicai');

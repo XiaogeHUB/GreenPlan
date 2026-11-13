@@ -24,6 +24,19 @@ String formatRemaining(Duration? remaining) {
   return '${remaining.inSeconds}秒';
 }
 
+/// 把一段时长格式化成中文文案，用于「共 X」这类展示。
+String formatDurationLabel(Duration duration) {
+  if (duration.inSeconds < 60) {
+    return '${duration.inSeconds} 秒';
+  }
+  if (duration.inMinutes < 60) {
+    return '${duration.inMinutes} 分钟';
+  }
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes % 60;
+  return minutes == 0 ? '$hours 小时' : '$hours 小时 $minutes 分';
+}
+
 /// 倒计时文案：`HH:MM:SS`，不足一小时时省略小时段。
 String formatCountdown(Duration remaining) {
   final safe = remaining.isNegative ? Duration.zero : remaining;

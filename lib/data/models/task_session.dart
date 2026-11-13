@@ -73,6 +73,9 @@ class TaskSession {
   /// 是否已经到点。
   bool isDue(DateTime now) => !now.isBefore(expectedEndAt);
 
+  /// 本次任务计划时长（支持秒级调试档位）。
+  Duration get plannedDuration => expectedEndAt.difference(startedAt);
+
   /// 剩余时间；已到点时为 [Duration.zero]。
   Duration remainingAt(DateTime now) {
     final remaining = expectedEndAt.difference(now);
