@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 通话状态检测：任务进行中豁免来电（规格 1.5） -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <!-- 过期提醒（规格第 10 节），Android 13+ 需运行时授权 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="GreenPlan"
         android:name="${applicationName}"

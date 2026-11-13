@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
 import '../../data/db/dao/reward_item_dao.dart';
+import '../../data/db/dao/settings_dao.dart';
 import '../../data/db/dao/task_session_dao.dart';
 import '../../data/models/reward_item.dart';
 import '../../data/models/task_session.dart';
@@ -13,14 +14,40 @@ import '../../domain/services/task_service.dart';
 /// 状态是「整张仓库快照」，每次操作后重新读库，避免内存和数据库出现两份真相。
 class WarehouseController extends AsyncNotifier<List<RewardItem>> {
   @override
-  Future<List<RewardItem>> build() {
-    return RewardItemDao(ref.watch(databaseProvider).db).getAll();
+  Future<List<RewardItem>> build() async {
+    final items = await RewardItemDao(ref.watch(databaseProvider).db).getAll();
+    _syncNotifications(items);
+    return items;
   }
 
   RewardItemDao get _dao => RewardItemDao(ref.read(databaseProvider).db);
 
   Future<void> reload() async {
     state = await AsyncValue.guard(() => _dao.getAll());
+    final items = state.asData?.value;
+    if (items != null) {
+      _syncNotifications(items);
+    }
+  }
+
+  /// 按最新仓库重排过期提醒；失败不影响界面。
+  void _syncNotifications(List<RewardItem> items) {
+    Future<void>(() async {
+      try {
+        final settings = SettingsDao(ref.read(databaseProvider).db);
+        final enabled = await settings.getBool(
+          SettingsDao.expiryNotificationKey,
+          fallback: true,
+        );
+        await ref.read(notificationServiceProvider).sync(
+              items: items,
+              config: ref.read(configProvider),
+              enabled: enabled,
+            );
+      } catch (_) {
+        // 通知失败不应影响仓库功能
+      }
+    });
   }
 
   /// 合成；成功返回 null，失败返回可直接展示的原因。

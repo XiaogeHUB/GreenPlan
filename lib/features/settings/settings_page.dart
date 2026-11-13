@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
 import '../../data/db/dao/settings_dao.dart';
+import '../../data/models/reward_item.dart';
 import '../warehouse/warehouse_controller.dart';
 
-/// 过期提醒开关；通知能力下一步接入，这里先把开关状态存好。
+/// 过期提醒开关的持久化状态。
 final expiryNotificationProvider = FutureProvider<bool>((ref) async {
   final dao = SettingsDao(ref.watch(databaseProvider).db);
   return dao.getBool(SettingsDao.expiryNotificationKey, fallback: true);
@@ -24,12 +25,21 @@ class SettingsPage extends ConsumerWidget {
         children: <Widget>[
           SwitchListTile(
             title: const Text('过期提醒'),
-            subtitle: const Text('普通奖励快过期时提醒（通知能力下一步接入）'),
+            subtitle: const Text('普通奖励过期前 12 小时提醒一次'),
             value: notification.asData?.value ?? true,
             onChanged: (value) async {
               final dao = SettingsDao(ref.read(databaseProvider).db);
               await dao.putBool(SettingsDao.expiryNotificationKey, value);
               ref.invalidate(expiryNotificationProvider);
+
+              final items =
+                  ref.read(warehouseProvider).asData?.value ??
+                      const <RewardItem>[];
+              await ref.read(notificationServiceProvider).sync(
+                    items: items,
+                    config: ref.read(configProvider),
+                    enabled: value,
+                  );
             },
           ),
           const Divider(height: 1),
