@@ -65,7 +65,6 @@ class _TaskPageState extends ConsumerState<TaskPage>
 
   Future<void> _startNativeMonitoring() async {
     final monitor = _monitor;
-    final messenger = ScaffoldMessenger.of(context);
     _nativeEvents = monitor.events.listen(
       (event) {
         _tracker.onNative(event, _now);
@@ -83,7 +82,7 @@ class _TaskPageState extends ConsumerState<TaskPage>
     if (!mounted || granted) {
       return;
     }
-    messenger.showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('未开启来电豁免，来电可能导致任务失败。可在「设置 → 来电豁免」开启。'),
       ),

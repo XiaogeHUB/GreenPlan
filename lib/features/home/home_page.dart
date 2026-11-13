@@ -62,14 +62,43 @@ class HomePage extends ConsumerWidget {
   ) async {
     final config = ref.read(configProvider);
     final reward = config.rewardById(duration.rewardId)!;
+    final phoneGranted =
+        await ref.read(nativeMonitorProvider).isPhonePermissionGranted();
+    if (!context.mounted) {
+      return;
+    }
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('开始 ${duration.label} 自律'),
-        content: Text(
-          '成功可获得「${reward.name}」。\n'
-          '期间离开应用会判定失败，来电与息屏不会。',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text('成功可获得「${reward.name}」。\n期间离开应用会判定失败，息屏不会。'),
+            if (!phoneGranted) ...<Widget>[
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 18,
+                    color: Theme.of(dialogContext).colorScheme.error,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      '未开启来电豁免：来电会被当成离开应用，60 秒内没切回来就判失败。'
+                      '可在「设置 → 来电豁免」开启。',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
         ),
         actions: <Widget>[
           TextButton(
@@ -78,7 +107,7 @@ class HomePage extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('开始'),
+            child: Text(phoneGranted ? '开始' : '仍然开始'),
           ),
         ],
       ),

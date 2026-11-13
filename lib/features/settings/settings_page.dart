@@ -17,11 +17,37 @@ final phonePermissionProvider = FutureProvider<bool>((ref) {
   return ref.watch(nativeMonitorProvider).isPhonePermissionGranted();
 });
 
-class SettingsPage extends ConsumerWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends ConsumerState<SettingsPage>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 用户可能刚从系统设置页回来，回到前台时重新读一次权限状态。
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(phonePermissionProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final notification = ref.watch(expiryNotificationProvider);
 
     return Scaffold(
@@ -37,9 +63,8 @@ class SettingsPage extends ConsumerWidget {
               await dao.putBool(SettingsDao.expiryNotificationKey, value);
               ref.invalidate(expiryNotificationProvider);
 
-              final items =
-                  ref.read(warehouseProvider).asData?.value ??
-                      const <RewardItem>[];
+              final items = ref.read(warehouseProvider).asData?.value ??
+                  const <RewardItem>[];
               await ref.read(notificationServiceProvider).sync(
                     items: items,
                     config: ref.read(configProvider),
@@ -54,7 +79,7 @@ class SettingsPage extends ConsumerWidget {
             leading: const Icon(Icons.delete_sweep_outlined),
             title: const Text('清空仓库'),
             subtitle: const Text('删除所有奖励，用于测试或重新开始'),
-            onTap: () => _clearWarehouse(context, ref),
+            onTap: _clearWarehouse,
           ),
           const Divider(height: 1),
           ListTile(
@@ -73,7 +98,7 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _clearWarehouse(BuildContext context, WidgetRef ref) async {
+  Future<void> _clearWarehouse() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -95,7 +120,7 @@ class SettingsPage extends ConsumerWidget {
       return;
     }
     await ref.read(warehouseProvider.notifier).clearAll();
-    if (!context.mounted) {
+    if (!mounted) {
       return;
     }
     ScaffoldMessenger.of(context)
@@ -115,6 +140,7 @@ class _PhonePermissionTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final granted = permission.asData?.value;
+    final enabled = granted ?? false;
     final subtitle = switch (granted) {
       true => '已开启，通话中不会判定任务失败',
       false => '未开启，来电可能被判定为离开应用',
@@ -123,14 +149,16 @@ class _PhonePermissionTile extends ConsumerWidget {
 
     return ListTile(
       leading: Icon(
-        granted == true ? Icons.phone_enabled : Icons.phone_disabled,
-        color: granted == true ? Colors.green : Colors.orange,
+        enabled ? Icons.phone_enabled : Icons.phone_disabled,
+        color: enabled ? Colors.green : Colors.orange,
       ),
       title: const Text('来电豁免'),
       subtitle: Text(subtitle),
-      trailing: granted == false
-          ? TextButton(
-              onPressed: () async {
+      // 已开启时按钮置灰（onPressed 为 null），未开启时可点。
+      trailing: TextButton(
+        onPressed: enabled
+            ? null
+            : () async {
                 final monitor = ref.read(nativeMonitorProvider);
                 await monitor.requestPhonePermission();
                 if (!await monitor.isPhonePermissionGranted()) {
@@ -139,12 +167,8 @@ class _PhonePermissionTile extends ConsumerWidget {
                 }
                 ref.invalidate(phonePermissionProvider);
               },
-              child: const Text('去开启'),
-            )
-          : null,
-      onTap: granted == false
-          ? () => ref.invalidate(phonePermissionProvider)
-          : null,
+        child: Text(enabled ? '已开启' : '去开启'),
+      ),
     );
   }
 }
