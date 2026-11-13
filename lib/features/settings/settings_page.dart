@@ -1,9 +1,13 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
 import '../../data/db/dao/settings_dao.dart';
 import '../../data/models/reward_item.dart';
+import '../../domain/services/backup_service.dart';
 import '../warehouse/warehouse_controller.dart';
 
 /// 过期提醒开关的持久化状态。
@@ -76,6 +80,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           _PhonePermissionTile(permission: ref.watch(phonePermissionProvider)),
           const Divider(height: 1),
           ListTile(
+            leading: const Icon(Icons.upload_file),
+            title: const Text('导出备份'),
+            subtitle: const Text('生成 JSON 备份文件，可自行保存'),
+            onTap: _exportBackup,
+          ),
+          ListTile(
+            leading: const Icon(Icons.download_outlined),
+            title: const Text('导入备份'),
+            subtitle: const Text('用备份文件替换当前所有数据'),
+            onTap: _importBackup,
+          ),
+          const Divider(height: 1),
+          ListTile(
             leading: const Icon(Icons.delete_sweep_outlined),
             title: const Text('清空仓库'),
             subtitle: const Text('删除所有奖励，用于测试或重新开始'),
@@ -98,8 +115,122 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     );
   }
 
-  Future<void> _clearWarehouse() async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _exportBackup() async {
+    try {
+      final service = ref.read(backupServiceProvider);
+      final content = await service.export();
+      final uri = await FilePicker.saveFile(
+        fileName: backupFileName(DateTime.now()),
+        bytes: backupBytes(content),
+        mimeType: 'application/json',
+        dialogTitle: '保存 GreenPlan 备份',
+      );
+      if (!mounted) {
+        return;
+      }
+      _toast(uri == null ? '已取消导出' : '备份已导出');
+    } on Exception catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _toast('导出失败：$error');
+    }
+  }
+
+  Future<void> _importBackup() async {
+    try {
+      final files = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: <String>['json'],
+        dialogTitle: '选择备份文件',
+      );
+      if (files.isEmpty) {
+        return;
+      }
+      final path = files.first.path;
+      if (path == null) {
+        _toast('无法读取该文件');
+        return;
+      }
+
+      final service = ref.read(backupServiceProvider);
+      final payload = service.parse(await File(path).readAsString());
+      if (!mounted) {
+        return;
+      }
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('导入备份？'),
+          content: Text(
+            '将用备份替换当前所有数据：\n'
+            '· 奖励 ${payload.items.length} 件\n'
+            '· 任务记录 ${payload.sessions.length} 条\n'
+            '· 称号最高等级 ${payload.maxGuadaLevel}\n\n'
+            '当前数据会被删除，且无法恢复。',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('替换'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) {
+        return;
+      }
+
+      await service.restore(payload);
+      ref.invalidate(warehouseProvider);
+      ref.invalidate(currentTitleProvider);
+      ref.invalidate(expiryNotificationProvider);
+      if (!mounted) {
+        return;
+      }
+      _toast('导入完成');
+    } on BackupException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('备份文件有问题'),
+          content: SingleChildScrollView(
+            child: Text(
+              error.issues.isEmpty ? error.message : error.toString(),
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+          actions: <Widget>[
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('知道了'),
+            ),
+          ],
+        ),
+      );
+    } on Exception catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _toast('导入失败：$error');
+    }
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _clearWarehouse() async {    final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('清空仓库？'),

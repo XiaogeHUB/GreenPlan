@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
 import '../data/db/app_database.dart';
+import '../domain/services/backup_service.dart';
 import '../domain/services/synthesis_service.dart';
 import '../domain/services/task_service.dart';
 import '../domain/services/title_service.dart';
@@ -22,6 +23,13 @@ final databaseProvider = Provider<AppDatabase>(
 
 /// 便于测试手动推进时间。
 final clockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+
+final backupServiceProvider = Provider<BackupService>((ref) {
+  return BackupService(
+    db: ref.watch(databaseProvider),
+    config: ref.watch(configProvider),
+  );
+});
 
 /// 过期提醒；测试可覆盖为空实现。
 final notificationServiceProvider = Provider<NotificationService>((ref) {
