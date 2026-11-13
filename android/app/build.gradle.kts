@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.greenplan.app"
-    compileSdk = flutter.compileSdkVersion
+    // 本机已装 platform 37；用 Flutter 默认的 36 会让 AGP 去 dl.google.com 在线补装（本机不可达）。
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
