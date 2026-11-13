@@ -22,6 +22,8 @@
 | 2026-11-13 | 0 / 8.2 | 包名 `namespace`、`applicationId`、Kotlin package 统一为 `com.greenplan.app`（原 `com.example.greenplan`） | 去掉占位前缀，避免将来装机身份冲突 |
 | 2026-11-13 | 1.5 / 待定项 7 | `minSdk` 显式固定为 24，不跟随 Flutter 默认值；电话监听需 `PhoneStateListener` 兜底 | 覆盖面优先，接受多写一套降级分支 |
 | 2026-11-13 | 1.4 / 7.3 / 待定项 3 | 仓库改为 **4 列 × 6 行**（逻辑仍 24 格，`slot_index` 0–23） | 竖屏更易点按 |
+| 2026-11-13 | 8.1 依赖 | 按 pub 当前兼容版落地：`flutter_riverpod 3.5.0`、`go_router 18.1.4`、`sqflite 2.4.6`、`intl 0.20.3`、`path 1.9.1`、`path_provider 2.1.6`、`uuid 4.6.0`。规格原文的 `^2.x / ^14.x / ^0.19.x` 已过时 | 规格版本号写于旧版本，按现行 SDK 解析 |
+| 2026-11-13 | 8.1 依赖 | `flutter_local_notifications`、`permission_handler`、`file_picker`、`share_plus` **延后**到通知/备份阶段再加 | `flutter_local_notifications` 需要同时开启 core library desugaring，提前加会给当前构建引入无收益的失败点 |
 
 ---
 下面这份可以直接作为开发规格交给 DSH。它把你已经拍板的规则、数据模型、状态机、页面、Android 原生能力、通知、备份、测试验收都写全了。DSH 按这个实现即可，不需要再猜规则。

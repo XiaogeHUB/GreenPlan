@@ -1,0 +1,7 @@
+[
+  { "minutes": 15, "rewardId": "cong" },
+  { "minutes": 30, "rewardId": "xiangcai" },
+  { "minutes": 60, "rewardId": "shanghaiqing" },
+  { "minutes": 120, "rewardId": "xiaobaicai" },
+  { "minutes": 240, "rewardId": "dabaicai" }
+]

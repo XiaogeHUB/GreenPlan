@@ -1,0 +1,124 @@
+[
+  {
+    "id": "cong",
+    "name": "葱",
+    "type": "ordinary",
+    "level": 1,
+    "order": 1,
+    "nextId": "xiangcai",
+    "permanent": false,
+    "shelfLifeHours": 72,
+    "icon": "assets/rewards/cong.png"
+  },
+  {
+    "id": "xiangcai",
+    "name": "香菜",
+    "type": "ordinary",
+    "level": 2,
+    "order": 2,
+    "nextId": "shanghaiqing",
+    "permanent": false,
+    "shelfLifeHours": 72,
+    "icon": "assets/rewards/xiangcai.png"
+  },
+  {
+    "id": "shanghaiqing",
+    "name": "上海青",
+    "type": "ordinary",
+    "level": 3,
+    "order": 3,
+    "nextId": "xiaobaicai",
+    "permanent": false,
+    "shelfLifeHours": 72,
+    "icon": "assets/rewards/shanghaiqing.png"
+  },
+  {
+    "id": "xiaobaicai",
+    "name": "小白菜",
+    "type": "ordinary",
+    "level": 4,
+    "order": 4,
+    "nextId": "dabaicai",
+    "permanent": false,
+    "shelfLifeHours": 72,
+    "icon": "assets/rewards/xiaobaicai.png"
+  },
+  {
+    "id": "dabaicai",
+    "name": "大白菜",
+    "type": "ordinary",
+    "level": 5,
+    "order": 5,
+    "nextId": "qincai",
+    "permanent": false,
+    "shelfLifeHours": 72,
+    "icon": "assets/rewards/dabaicai.png"
+  },
+  {
+    "id": "qincai",
+    "name": "芹菜",
+    "type": "special",
+    "level": 6,
+    "order": 6,
+    "nextId": "xilanhua",
+    "permanent": true,
+    "shelfLifeHours": null,
+    "icon": "assets/rewards/qincai.png"
+  },
+  {
+    "id": "xilanhua",
+    "name": "西兰花",
+    "type": "special",
+    "level": 7,
+    "order": 7,
+    "nextId": "wosun",
+    "permanent": true,
+    "shelfLifeHours": null,
+    "icon": "assets/rewards/xilanhua.png"
+  },
+  {
+    "id": "wosun",
+    "name": "莴笋",
+    "type": "special",
+    "level": 8,
+    "order": 8,
+    "nextId": "huanggua",
+    "permanent": true,
+    "shelfLifeHours": null,
+    "icon": "assets/rewards/wosun.png"
+  },
+  {
+    "id": "huanggua",
+    "name": "黄瓜",
+    "type": "special",
+    "level": 9,
+    "order": 9,
+    "nextId": "sigua",
+    "permanent": true,
+    "shelfLifeHours": null,
+    "icon": "assets/rewards/huanggua.png"
+  },
+  {
+    "id": "sigua",
+    "name": "丝瓜",
+    "type": "special",
+    "level": 10,
+    "order": 10,
+    "nextId": "kugua",
+    "permanent": true,
+    "shelfLifeHours": null,
+    "icon": "assets/rewards/sigua.png"
+  },
+  {
+    "id": "kugua",
+    "name": "苦瓜",
+    "type": "bitter",
+    "level": 1,
+    "order": 11,
+    "nextId": null,
+    "permanent": true,
+    "shelfLifeHours": null,
+    "bitterCombine": true,
+    "icon": "assets/rewards/kugua.png"
+  }
+]
