@@ -24,6 +24,9 @@
 | 2026-11-13 | 1.4 / 7.3 / 待定项 3 | 仓库改为 **4 列 × 6 行**（逻辑仍 24 格，`slot_index` 0–23） | 竖屏更易点按 |
 | 2026-11-13 | 8.1 依赖 | 按 pub 当前兼容版落地：`flutter_riverpod 3.5.0`、`go_router 18.1.4`、`sqflite 2.4.6`、`intl 0.20.3`、`path 1.9.1`、`path_provider 2.1.6`、`uuid 4.6.0`。规格原文的 `^2.x / ^14.x / ^0.19.x` 已过时 | 规格版本号写于旧版本，按现行 SDK 解析 |
 | 2026-11-13 | 8.1 依赖 | `flutter_local_notifications`、`permission_handler`、`file_picker`、`share_plus` **延后**到通知/备份阶段再加 | `flutter_local_notifications` 需要同时开启 core library desugaring，提前加会给当前构建引入无收益的失败点 |
+| 2026-11-13 | 8.3 分层 | **取消独立的 Repository 转发层**，由 DAO 承担「只做 DB 读写」的职责，Service 直接组合 DAO + 事务 | 规格里的 Repository 只是原样转发 DAO，徒增一层；真实分层边界在 Service |
+| 2026-11-13 | 3 数据模型 | 表结构按规格落地，另加 `idx_task_status`、`idx_interruption_session` 两个索引；未加 `slot_index` 的 CHECK 约束 | 24 格容量属于业务规则，放 schema 里会让改容量必须迁移 |
+| 2026-11-13 | 3 数据模型 | `title_progress` 更新用 `INSERT OR IGNORE` + `UPDATE ... MAX()`，不用 UPSERT | `minSdk 24` 的老设备 SQLite 3.9 不支持 UPSERT 语法 |
 
 ---
 下面这份可以直接作为开发规格交给 DSH。它把你已经拍板的规则、数据模型、状态机、页面、Android 原生能力、通知、备份、测试验收都写全了。DSH 按这个实现即可，不需要再猜规则。
