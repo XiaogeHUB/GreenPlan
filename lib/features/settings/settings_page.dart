@@ -12,6 +12,11 @@ final expiryNotificationProvider = FutureProvider<bool>((ref) async {
   return dao.getBool(SettingsDao.expiryNotificationKey, fallback: true);
 });
 
+/// 电话状态权限是否已授予（决定来电是否豁免）。
+final phonePermissionProvider = FutureProvider<bool>((ref) {
+  return ref.watch(nativeMonitorProvider).isPhonePermissionGranted();
+});
+
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -42,6 +47,8 @@ class SettingsPage extends ConsumerWidget {
                   );
             },
           ),
+          const Divider(height: 1),
+          _PhonePermissionTile(permission: ref.watch(phonePermissionProvider)),
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.delete_sweep_outlined),
@@ -93,5 +100,51 @@ class SettingsPage extends ConsumerWidget {
     }
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('仓库已清空')));
+  }
+}
+
+/// 来电豁免（电话状态权限）状态与开启入口。
+///
+/// 未授权时任务仍然可用，只是来电会被当成普通失焦（60 秒宽限），
+/// 所以这里必须显式提示，而不是静默降级。
+class _PhonePermissionTile extends ConsumerWidget {
+  const _PhonePermissionTile({required this.permission});
+
+  final AsyncValue<bool> permission;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final granted = permission.asData?.value;
+    final subtitle = switch (granted) {
+      true => '已开启，通话中不会判定任务失败',
+      false => '未开启，来电可能被判定为离开应用',
+      null => '正在检查权限…',
+    };
+
+    return ListTile(
+      leading: Icon(
+        granted == true ? Icons.phone_enabled : Icons.phone_disabled,
+        color: granted == true ? Colors.green : Colors.orange,
+      ),
+      title: const Text('来电豁免'),
+      subtitle: Text(subtitle),
+      trailing: granted == false
+          ? TextButton(
+              onPressed: () async {
+                final monitor = ref.read(nativeMonitorProvider);
+                await monitor.requestPhonePermission();
+                if (!await monitor.isPhonePermissionGranted()) {
+                  // 二次拒绝后系统不再弹窗，引导去应用设置
+                  await monitor.openAppSettings();
+                }
+                ref.invalidate(phonePermissionProvider);
+              },
+              child: const Text('去开启'),
+            )
+          : null,
+      onTap: granted == false
+          ? () => ref.invalidate(phonePermissionProvider)
+          : null,
+    );
   }
 }

@@ -7,8 +7,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
+import android.provider.Settings
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
 import io.flutter.embedding.android.FlutterActivity
@@ -53,6 +55,10 @@ class MainActivity : FlutterActivity() {
                     "isPhonePermissionGranted" -> result.success(hasPhonePermission())
                     "requestPhonePermission" -> {
                         requestPhonePermission()
+                        result.success(null)
+                    }
+                    "openAppSettings" -> {
+                        openAppSettings()
                         result.success(null)
                     }
                     else -> result.notImplemented()
@@ -157,6 +163,15 @@ class MainActivity : FlutterActivity() {
             arrayOf(Manifest.permission.READ_PHONE_STATE),
             PHONE_PERMISSION_REQUEST,
         )
+    }
+
+    /** 用户二次拒绝后系统不再弹窗，只能引导到应用设置页手动开启。 */
+    private fun openAppSettings() {
+        val intent = Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", packageName, null),
+        )
+        startActivity(intent)
     }
 
     override fun onRequestPermissionsResult(

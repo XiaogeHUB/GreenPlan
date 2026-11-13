@@ -65,6 +65,7 @@ class _TaskPageState extends ConsumerState<TaskPage>
 
   Future<void> _startNativeMonitoring() async {
     final monitor = _monitor;
+    final messenger = ScaffoldMessenger.of(context);
     _nativeEvents = monitor.events.listen(
       (event) {
         _tracker.onNative(event, _now);
@@ -76,6 +77,17 @@ class _TaskPageState extends ConsumerState<TaskPage>
       onError: (Object _) {},
     );
     await monitor.start();
+
+    // 未授权电话状态时，来电会被当作普通失焦（60 秒宽限），必须显式告知用户。
+    final granted = await monitor.isPhonePermissionGranted();
+    if (!mounted || granted) {
+      return;
+    }
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('未开启来电豁免，来电可能导致任务失败。可在「设置 → 来电豁免」开启。'),
+      ),
+    );
   }
 
   DateTime get _now => ref.read(clockProvider)();

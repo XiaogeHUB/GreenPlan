@@ -64,6 +64,9 @@ class NativeMonitor {
 
   Future<void> requestPhonePermission() => _invoke('requestPhonePermission');
 
+  /// 用户二次拒绝后系统不再弹窗，只能跳到应用设置页手动开启。
+  Future<void> openAppSettings() => _invoke('openAppSettings');
+
   Future<void> _invoke(String method) async {
     try {
       await _methods.invokeMethod<void>(method);
