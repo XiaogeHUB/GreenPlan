@@ -27,6 +27,8 @@
 | 2026-11-13 | 8.3 分层 | **取消独立的 Repository 转发层**，由 DAO 承担「只做 DB 读写」的职责，Service 直接组合 DAO + 事务 | 规格里的 Repository 只是原样转发 DAO，徒增一层；真实分层边界在 Service |
 | 2026-11-13 | 3 数据模型 | 表结构按规格落地，另加 `idx_task_status`、`idx_interruption_session` 两个索引；未加 `slot_index` 的 CHECK 约束 | 24 格容量属于业务规则，放 schema 里会让改容量必须迁移 |
 | 2026-11-13 | 3 数据模型 | `title_progress` 更新用 `INSERT OR IGNORE` + `UPDATE ... MAX()`，不用 UPSERT | `minSdk 24` 的老设备 SQLite 3.9 不支持 UPSERT 语法 |
+| 2026-11-13 | 4.4 | 仓库满时不丢奖励：任务转 `success_pending_reward`，并新增 `TaskService.claimPendingReward()` 作为领取入口 | 规格只定义了状态，没写谁来领取 |
+| 2026-11-13 | 6.3 | 合成产物格位**限定为两个原材料之一所在的格位**，其它格位直接拒绝 | 否则产物可能落到无关格位或撞上第三方物品 |
 
 ---
 下面这份可以直接作为开发规格交给 DSH。它把你已经拍板的规则、数据模型、状态机、页面、Android 原生能力、通知、备份、测试验收都写全了。DSH 按这个实现即可，不需要再猜规则。
